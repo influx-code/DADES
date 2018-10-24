@@ -95,4 +95,6 @@ class Protype(object):
         @self.ins.msg_register(others)
         def reply(msg):
             self.logger.log('!!!!!!!! : %s' % msg)
-            self.send(msg, msg.content)
+            # self.send(msg, msg.content)
+            return
+
