@@ -5,6 +5,7 @@
 # --------------------------------
 
 import datetime
+import time
 import random
 
 import itchat
@@ -23,12 +24,14 @@ class Protype(object):
         self.config_protype = ConfigProtype
         self.status_storage_dir = self.config_protype.status_storage_dir
         self.name = self.config_protype.name
-        
+        self.combo_limit = 3
+
     def initial(self):
         self.tuling = Tuling(self.name)
         self.ins = self.auto_login()
 
         self.register_text()
+        # self.register_picture()
         self.register_other()
 
     # Basic control
@@ -51,6 +54,9 @@ class Protype(object):
 
     def send(self, msg_obj, content):
         msg_obj.user.send(content)
+
+    def send_image(self, msg_obj, image_url):
+        msg_obj.user.send_image(image_url)
 
     # Attributes
     def get_friends(self):
@@ -75,8 +81,20 @@ class Protype(object):
     # Reply
     def reply_base(self, msg_obj, content):
         self.logger.log("receive raw text: \n" + str(content))
+        
         res = self.tuling.chat(content)
         self.send(msg_obj, res)
+
+        # combo = random.choice(range(1, self.combo_limit+1))
+        # self.logger.log("combo : %d" % combo)
+
+        # for i in range(combo):
+        #     res = self.tuling.chat(content)
+        #     self.send(msg_obj, res)
+        #     content = res
+
+        #     if combo > 1:
+        #         time.sleep(round(random.random() * 2, 1))
 
     def register_text(self):
 
@@ -88,13 +106,26 @@ class Protype(object):
         def reply_group(msg):
             self.reply_base(msg, msg.text)
 
+    def register_picture(self):
+
+        image_url = ""
+
+        @self.ins.msg_register(PICTURE)
+        def reply(msg):
+            self.send_image(msg, image_url)
+
+        @self.ins.msg_register(PICTURE, isGroupChat=True)
+        def reply_group(msg):
+            self.send_image(msg, image_url)
+
     def register_other(self):
         others = [MAP, CARD, NOTE, SHARING, PICTURE,
                   RECORDING, VOICE, ATTACHMENT, VIDEO, FRIENDS, SYSTEM]
 
         @self.ins.msg_register(others)
         def reply(msg):
-            self.logger.log('!!!!!!!! : %s' % msg)
-            # self.send(msg, msg.content)
+            self.logger.log('!!!!!!!! : % s' % msg)
+            # self.send(msg, "说话")
+            self.reply_base(msg, "说")
             return
 
