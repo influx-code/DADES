@@ -31,13 +31,29 @@ class ConfigLogger(object):
         log_file = 'dades.log'
 
 
-class ConfigRobot(object):
-    status_storage_dir = 'newInstance.pkl'
+class ConfigTuling(object):
+    apikey = 'b7022575cacd4fe199c679ed26d6ff1d'
+    secret = ''
+    host = 'http://www.tuling123.com/openapi/api'
 
-    default_reply = [
-        '辛苦了，但是我只能识别指定格式的消息哦，请按照规定回复吧',
-        'Wow，看起来好厉害的样子呢，但是这个我不懂呀，请按照规定回复吧',
-        '救命啊，我真的不明白你在说什么，请按照规定回复吧',
-        '为了世界的爱与和平，请按照规定回复吧',
-        '程序员锅锅已经想不出卖萌的话了，看在我家的猫份上请按照规定回复啊啊啊'
-    ]
+
+class ConfigProtype(object):
+    status_storage_dir = 'newInstance.pkl'
+    name = 'Protype'
+    
+
+class ConfigRick(object):
+    name = 'Rick'
+    sex = 'male'
+
+
+class ConfigRoy(object):
+    name = 'Roy'
+    sex = 'male'
+
+
+class ConfigRachael(object):
+    name = 'Rachael'
+    sex = 'female'
+
+

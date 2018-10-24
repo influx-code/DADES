@@ -8,25 +8,30 @@ import datetime
 import random
 
 import itchat
-from itchat.content import *
+from itchat.content import TEXT, MAP, CARD, NOTE, SHARING, PICTURE, \
+    RECORDING, VOICE, ATTACHMENT, VIDEO, FRIENDS, SYSTEM
 
-from config import ConfigRobot
+from config import ConfigProtype
 from utils.logger import Logger
+from utils.tuling import Tuling
 
 
-
-class Robot(object):
+class Protype(object):
     def __init__(self):
         self.logger = Logger(self.__class__.__name__)
 
-        self.config_cls = ConfigRobot
-        self.status_storage_dir = self.config_cls.status_storage_dir
-        self.default_reply = self.config_cls.default_reply
-
+        self.config_protype = ConfigProtype
+        self.status_storage_dir = self.config_protype.status_storage_dir
+        self.name = self.config_protype.name
+        
+    def initial(self):
+        self.tuling = Tuling(self.name)
         self.ins = self.auto_login()
+
         self.register_text()
         self.register_other()
 
+    # Basic control
     def login(self):
         ins = itchat.new_instance()
         ins.login()
@@ -41,77 +46,15 @@ class Robot(object):
         )
         return ins
 
-    def register_text(self):
+    def run(self):
+        self.ins.run()
 
-        def reply_base(msg):
-            raw_text = msg.text
-            self.logger.log("receive raw text: \n" + str(raw_text))
+    def send(self, msg_obj, content):
+        msg_obj.user.send(content)
 
-            sentences = raw_text.split('\n')
-            reply_lst = []
-            csv_data_lst = []
-
-            for i,sentence in enumerate(sentences):
-                lst = []
-
-                if sentence.find('：') > 0:
-                    lst = sentence.split('：')
-                elif sentence.find(':') > 0:
-                    lst = sentence.split(':')
-                
-                if not lst:
-                    self.logger.errlog("no ':' found, raw sentence : %s" % sentence)
-                    # msg.user.send(self.reply_default(msg.user['NickName']))
-                    msg.user.send('rubbish')
-                    continue
-
-                head = lst[0][0]
-                val = lst[1]
-
-                if i == 0:
-                    head = lst[0][0:2]
-                
-                new_s = head + ' ' + val
-                reply_lst.append(new_s)
-
-                csv_data_lst.append(val)
-
-            if csv_data_lst:
-                csv_data_lst.append(
-                    datetime.datetime.strftime(
-                        datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'
-                    )
-                )
-                self.write_csv(csv_data_lst)
-
-            reply_s = '\n'.join(reply_lst)
-            msg.user.send(reply_s)
-            # return reply_s
-
-        @self.ins.msg_register(TEXT)
-        def reply(msg):
-            reply_base(msg)
-    
-        # @self.ins.msg_register(TEXT, isGroupChat=True)
-        # def reply_group(msg):
-        #     reply_base(msg)
-
-    def register_other(self):
-        others = [MAP, CARD, NOTE, SHARING, PICTURE, RECORDING, ATTACHMENT, VIDEO, FRIENDS]
-
-        @self.ins.msg_register(others)
-        def reply(msg):
-            print(msg)
-            if msg.user.get('NickName'):
-                msg.user.send(self.reply_default(msg.user['NickName']))
-            else:
-                msg.user.send(self.reply_default('朋友'))
-
-    def reply_default(self, nickname):
-        return random.choice(self.default_reply) + '，' + nickname
-
+    # Attributes
     def get_friends(self):
-        friends = self.ins.get_friends(update = True)[0:]
+        friends = self.ins.get_friends(update=True)[0:]
 
         for f in friends:
             self.logger.log(f)
@@ -120,6 +63,36 @@ class Robot(object):
         total = len(friends[1:])
         self.logger.log(total)
 
-    def run(self):
-        self.ins.run()
+    def get_chatrooms(self):
+        chatrooms = self.ins.get_chatrooms(update=True)
 
+        for room in chatrooms:
+            self.logger.log(room)
+
+        total = len(chatrooms)
+        self.logger.log(total)
+
+    # Reply
+    def reply_base(self, msg_obj, content):
+        self.logger.log("receive raw text: \n" + str(content))
+        res = self.tuling.chat(content)
+        self.send(msg_obj, res)
+
+    def register_text(self):
+
+        @self.ins.msg_register(TEXT)
+        def reply(msg):
+            self.reply_base(msg, msg.text)
+
+        @self.ins.msg_register(TEXT, isGroupChat=True)
+        def reply_group(msg):
+            self.reply_base(msg, msg.text)
+
+    def register_other(self):
+        others = [MAP, CARD, NOTE, SHARING, PICTURE,
+                  RECORDING, VOICE, ATTACHMENT, VIDEO, FRIENDS, SYSTEM]
+
+        @self.ins.msg_register(others)
+        def reply(msg):
+            self.logger.log('!!!!!!!! : %s' % msg)
+            self.send(msg, msg.content)
